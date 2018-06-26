@@ -1,0 +1,384 @@
+---
+title: "Homework 5"
+author: ''
+date: ''
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+# Data
+
+As with Homework 4, all the numeric values you need, other than `0.05`, `0`, `1`, `2` and `3` are defined below:
+
+```{r, results='hide', warning =FALSE, message=FALSE}
+
+library(dplyr);
+library(rowr);
+library(plyr);
+
+Year=c(1936, 1946, 1951, 1963, 1975, 1997, 2006)
+CaloriesPerRecipeMean <- c(2123.8, 2122.3, 2089.9, 2250.0, 2234.2, 2249.6, 3051.9)
+CaloriesPerRecipeSD <- c(1050.0, 1002.3, 1009.6, 1078.6, 1089.2, 1094.8, 1496.2)
+CaloriesPerServingMean <- c(268.1, 271.1, 280.9, 294.7, 285.6, 288.6, 384.4)
+CaloriesPerServingSD <- c(124.8, 124.2, 116.2, 117.7, 118.3, 122.0, 168.3)
+ServingsPerRecipeMean <- c(12.9, 12.9, 13.0, 12.7, 12.4, 12.4, 12.7)
+ServingsPerRecipeSD <- c(13.3, 13.3, 14.5, 14.6, 14.3, 14.3, 13.0)
+
+CookingTooMuch.dat <- data.frame(
+  Year=Year,
+  CaloriesPerRecipeMean = CaloriesPerRecipeMean,
+  CaloriesPerRecipeSD = CaloriesPerRecipeSD,
+  CaloriesPerServingMean = CaloriesPerServingMean,
+  CaloriesPerServingSD = CaloriesPerServingSD,
+  ServingsPerRecipeMean = ServingsPerRecipeMean,
+  ServingsPerRecipeSD = ServingsPerRecipeSD
+)
+
+sample.size <- 18
+tenth.increment <- 0.10
+hundredth.increment <- 0.100
+idx.1936 <- 1
+idx.2006 <- length(CaloriesPerRecipeMean)
+idxs36_07 <- c(idx.1936,idx.2006)
+alpha=0.05
+```
+
+Nearly all the same restrictions apply. Specifically
+
+
+* There are 6 exercises. Choose 4 to be graded.
+* One of the exercises must be completed in both SAS and R. Make sure you document this in the output.
+* The other 3 exercises are to be complete in either R or SAS. Make sure you document this in the output.
+* You may choose to work the other exercises. If you do, put these *after* the exercises you want graded. Otherwise, we'll grade the first four exercises and stop grading there. Time permitting, we'll provide feedback on the additional exercises.
+* You are not required to write additional (other than previous Homework) functions for this exercise, but you may. You will be expected to clearly document additional functions - identify the expected inputs and outputs.
+
+* There are no unit tests for this exercise. Where applicable, you should compare your results to comparable results in previous homework.
+
+* This is an exercise in working with data tables. For three exercises, you will create data tables from sequences; for the last two you are expected to read data from files. One requires you to convert a data table to matrices, without calling `data.frame` directly.
+
+* If you choose SAS, some of the exercises will require you to transfer data between PROC IML and the DATA step. You may need to redefine macros from previous assignments. 
+
+
+# Exercise 1
+
+Repeat the analysis from Exercise 1, Homework 4. This time, the results wil be in a data table with 49 rows. There will be 7 columns in the final table, `Year1`, `Year2`, `Mean1`, `SD1`, `Mean2`, `SD2` and `CohenD`. This table will have the same duplications as your matrix in Homework 4 (don't worry, we'll remove those in later exercises).
+
+## Part a
+
+Create a data table where each row represents a different combination between years. It should look something like:
+
+Year1 | Year2 |  Mean1 |  Mean2 |    SD1 |    SD2 
+------|-------|--------|--------|--------|-------
+ 1936 |  1936 | 2123.8 | 2123.8 | 1050.0 | 1050.0
+ 1946 |  1936 | 2122.3 | 2123.8 | 1002.3 | 1050.0
+ 1951 |  1936 | 2089.9 | 2123.8 | 1009.6 | 1050.0
+ 1963 |  1936 | 2250.0 | 2123.8 | 1078.6 | 1050.0
+ ...  |   ... |    ... |    ... |    ... |    ...     
+ 1936 |  1946 | 2123.8 | 2122.3 | 1050.0 | 1002.3
+ 1946 |  1946 | 2122.3 | 2122.3 | 1002.3 | 1002.3
+ ...  |   ... |    ... |    ... |    ... |    ... 
+
+
+Start with the vectors defined in Data. You can reuse the matrices from the last homework, if you wish, or you can create new sequences while constructing the data table
+
+If you do this exercise in SAS, use IML to create the vectors, the use `CREATE` to create a data table.
+
+
+# HOMEWORK EXERCISES 
+
+### PART A: 
+Create a data table where each row represents a different combination between years.
+
+
+```{r}
+YEAR1<-(rep(Year,  7))
+YEAR2<-(rep(Year,  each = 7))
+MEAN1<-(rep(CaloriesPerRecipeMean, 7))
+MEAN2<-(rep(CaloriesPerRecipeMean, each=7))
+SD1<-(rep(CaloriesPerRecipeSD, 7))
+SD2<-(rep(CaloriesPerRecipeSD, each = 7))
+part.Atable<-as.data.frame(cbind(YEAR1, YEAR2, MEAN1, MEAN2, SD1, SD2))
+head(part.Atable, 10)
+```
+
+
+## Part B:
+
+Below is a wrapper function that accepts a vector as a parameter and returns Cohen's $d$ for values in that vector. Modify this function so that it selects appropriate elements from the vector and calls **your* Cohen's $d$ function from the previous homework. Assume that `table.row` is a row from the data table you created in Part a.
+
+```{r}
+  mean_1<-part.Atable[1:49, c("MEAN1")] 
+ mean_2<-part.Atable[1:49, c("MEAN2")]
+  sd_1<-part.Atable[1:49, c("SD1")]
+  sd_2<-part.Atable[1:49, c("SD2")]
+  
+ a<-cbind(mean_1, mean_2, sd_1, sd_2)
+  
+  cohen.wrapper <- function(M, n, x, y) {
+
+ 
+  
+  cohen.d<-abs(mean_1 - mean_2) / sqrt( ( sd_1^ 2 + sd_2 ^ 2 ) / 2 )
+  return(cohen.d)
+}
+fun.matrix<-as.matrix(cohen.wrapper())
+head(fun.matrix)
+
+```
+
+If you choose SAS for this exercise, define a macro to implement Cohen's $d$ formula, using syntax compatible with IML. This macro should have four parameters appropriate for Cohen's $d$.
+
+## Part C:
+
+Compute `CohenD` and add this to your table using `apply` and the wrapper function in Part b. Print this table and compare to the matrix you produced in Homework 4.
+
+
+If you choose SAS, create a second data table, starting with the data table in part a (use SET in the data statement). Insert your macro in the body of this data step. Print your table. Use the names of your data table as parameters to this macro. Your macro will be replaced with the formula; assign the macro invocation a data variable `CohenD`.
+
+
+```{r}
+a.pply<-lapply(a[1], cohen.wrapper)
+a.pply<-unlist(a.pply)
+a.pply<-as.matrix(a.pply)
+head(a.pply)
+```
+
+#### HOMEWORK 4 TABLE
+
+- Both tables have the same result.
+
+### image goes here
+
+```{r echo=FALSE, out.width='50%'}
+
+```
+
+
+# Exercise 2.
+
+In this exercise, we reproduce and extend the plot from Exercise 2, Homework 4. 
+
+## Part a
+Create a data table with a sequence from `x3 =` $\mu-3\sigma \dots \mu+3\sigma$ using increments defined by `tenth.increment`, as before. Name this column `X`. 
+
+
+#### DATA
+
+- This chunk has the formulas that will generate the sequences and tables
+
+```{r, warning=FALSE, rusults='hide'}
+mu <- 0; sigma <- 1 
+X3 <- seq(from=(mu-3*sigma), to=(mu+3*sigma),.1)
+l_3<- (1/sqrt(2*pi*sigma^2))*exp(-(X3-mu)^2/(2*sigma^2))
+X2<-seq(from=(mu-sigma*2), to=(mu+sigma*2),.1)
+l_2 <- (1/sqrt(2*pi*sigma^2))*exp(-(X2-mu)^2/(2*sigma^2))
+X1<-seq(from=(mu-sigma), to=(mu+sigma),.1)
+l_1 <- (1/sqrt(2*pi*sigma^2))*exp(-(X1-mu)^2/(2*sigma^2))
+
+key<-c(seq(-1,1,.1))
+L1<-cbind(key, l_1)
+dfl1<-as.data.frame(L1)
+
+key<-c(seq(-2,2,.1))
+L2<-cbind(key, l_2)
+dfl2<-as.data.frame(L2)
+
+key<-c(seq(-3,3,.1))
+L3<-cbind(key, l_3)
+#dfx<-as.data.frame(L3)
+dfl3<-as.data.frame(L3)
+
+key<-c(seq(-3,3,.1))
+X<-cbind(key, X3)
+dfx<-as.data.frame(X)
+
+
+
+
+```
+
+
+
+If you choose SAS, do this step in IML.
+
+## Part b
+
+Compute the likelihood and assign this to three columns, `L1`, `L2`, `L3`. These columns will correspond to the values computed for sequences x1, x2 and x3. To make columns `L1` and `L2` fit in this data table, pad the columns with NA values. 
+
+X                   |                L1 |                L2 |  L3  
+--------------------|-------------------|-------------------|-------
+$\mu-3\sigma$       |                 - |                 - | $L(x,\mu,\sigma)$
+$(\mu-3\sigma)+0.1$ |                 - |                 - | $L(x,\mu,\sigma)$
+$(\mu-3\sigma)+0.2$ |                 - |                 - | $L(x,\mu,\sigma)$
+...                 |               ... |               ... |    ... |     
+$\mu-2\sigma$       |                 - | $L(x,\mu,\sigma)$ | $L(x,\mu,\sigma)$
+$(\mu-2\sigma)+0.1$ |                 - | $L(x,\mu,\sigma)$ |  $L(x,\mu,\sigma)$
+$(\mu-2\sigma)+0.2$ |                 - | $L(x,\mu,\sigma)$ | $L(x,\mu,\sigma)$
+...                 |               ... |    ... |    ... |    ... |    ... 
+$\mu-\sigma$        | $L(x,\mu,\sigma)$ | $L(x,\mu,\sigma)$ | $L(x,\mu,\sigma)$
+$(\mu-\sigma)+0.1$  |$L(x,\mu,\sigma)$ | $L(x,\mu,\sigma)$ |  $L(x,\mu,\sigma)$
+$(\mu-\sigma)+0.2$  | $L(x,\mu,\sigma)$ | $L(x,\mu,\sigma)$ | $L(x,\mu,\sigma)$
+...                 |   ... |    ... |    ... |    ... |    ... 
+$(\mu+3\sigma)-0.1$ |  - | - |  $L(x,\mu,\sigma)$
+$\mu+3\sigma$       |  - | - | $L(x,\mu,\sigma)$
+
+A couple different approaches you might try:
+
+
+- Use `L3` values for all columns, but change values to `NA` outside the appropriate range (you can use boolean indexes in R).
+- Reuse the sequences from Homework 4 to build the data frame, concatenating with sequences of `NA` as needed.
+
+If you choose SAS, costruct this data in IML, then use `CREATE` to create a data table. 
+
+### The data below has various data frames. I tried to create 
+
+```{r}
+d<-merge(data.frame(dfx, row.names=NULL), data.frame(dfl1, row.names=NULL), by = 0, all = TRUE)[-1]
+D<-as.data.frame(as.matrix(d))
+d1<-merge(data.frame(dfx, row.names=NULL), data.frame(dfl2, row.names=NULL), by = 0, all = TRUE)[-1]
+D1<-as.data.frame(as.matrix(d1))
+d2<-merge(data.frame(dfx, row.names=NULL), data.frame(dfl3, row.names=NULL), by = 0, all = TRUE)[-1]
+D2<-as.data.frame(as.matrix(d2))
+
+
+par(mfrow=c(2,3))
+mydata<-cbind(D, D1, D2)
+mydata<-as.data.frame(mydata)
+mydata<-mydata[order(mydata$X3),]
+tail(mydata)
+```
+
+
+
+## Part D
+
+Plot `L3` vs `X`, using formula syntax, with this data table as a parameter to plot, using points as the symbol. 
+
+Add points for `L2`, then `L1`, using different colors or symbols. Complete the plot by adding vertical lines at $\pm 1$ and $\pm 2$, using colors matching `L1` and `L2`, respectively.
+
+If you use SAS, you will only need to call one `SGPLOT` block, with multiple `series` or `scatter` statements.
+
+If you follow the instructions, you should have a graph of a normal probability distribution with different colors for the parts of the curve representing 1, 2 and 3 standard deviations.
+
+```{r}
+par(mfrow=c(2,3))
+mydata<-cbind(D, D1, D2)
+mydata<-as.data.frame(mydata)
+mydata<-mydata[order(mydata$X3),]
+L3vsx<-plot(mydata[c( 2, 12)], type='p')
+abline(v=c(-1,1), col=c("blue", "blue"), lty=c(2,2), lwd=c(3, 3))
+abline(v=c(-2,2), col=c("red", "red"), lty=c(2,2), lwd=c(3, 3), type ='p')
+
+names(mydata)[3] <- "X_l_1"
+names(mydata)[7] <- "X_l_2"
+L1vsx<-plot(mydata[c( 3, 4)] , col = 'blue')
+abline(v=c(-1,1), col=c("blue", "blue"), lty=c(2,2), lwd=c(3, 3))
+L2vsx<-plot(mydata[c( 7, 8)], col = 'red')
+abline(v=c(-2,2), col=c("red", "red"), lty=c(2,2), lwd=c(3, 3), type ='p')
+
+
+
+
+```
+
+## Part E
+Use `apply` (or similar function), compute the sum of columns L1, L2 and L3, multiplied by `tenth.increment`. Compare these values with the sums calculated for the previous exercise.
+
+```{r}
+mylist<-list(l_1, l_2, l_3)
+mylappy<-lapply(mylist, function(x) sum(x)*.1)
+mylappy
+```
+
+
+If you use SAS, you can use PROC SUMMARY for this step.
+
+
+# Exercise 3
+
+Starting with 'CookingToMuch.dat', repeat the analysis from Homework 4, Exercise 5. 
+
+Append an appropriate column (named `Intercept`), with all values of 1, to `CookingToMuch.dat`, then use column indexes to extract appropriate $X$ and $y$ variables from `CookingToMuch.dat`. Do not create new matrices or frames for $X$ and $y$. You may to coerce $X$ or $Y$ to matrices.
+
+If you use SAS for this exercise, use the data table `CookingToMuch`, and use IML functions (`USE/READ`) to read from this data table into matrices.
+
+
+Compute and print `beta.hat` as before, and compare to
+```{r}
+lm(CaloriesPerRecipeMean ~ CaloriesPerServingMean,data=CookingTooMuch.dat)
+```
+
+Change the eval flag in this for an alternative model.
+
+```{r,eval=FALSE}
+lm(CaloriesPerRecipeMean ~ 0 + Intercept +  CaloriesPerServingMean,data=CookingTooMuch.dat)
+```
+
+
+# Exercise 4
+
+This exercise will be similar to Exercise 4 in Homework 4. 
+
+## Part a
+
+First, find the minimum and maximum values for ServingsPerRecipeMean.
+
+## Part b
+
+Using your Poisson confidence interval function from Homework 3, Exercise 4, calculate the lower and upper bounds to the minimum and maximum means found in Part a. Set `LB` as the smallest (single value) of these bounds, set `UB` as the largest (single value) of these bounds.
+
+## Part c
+
+Create a data frame with a column 'Y' as a sequence from `floor(LB)` to `ceiling(UB)`. Add to this data frame two columns, one the Poisson probability from Homework 4 using
+$\mu=$ the maximum servings per recipe mean, and the other using the minimum servings per recipe mean.
+
+## Part d
+
+Plot both probability series against `Y`, using different colors. Use formula notation for the plots.
+
+Add to this plot two vertical lines, located at the minimum and maximum mean values. Use the same color as the corresponding probablity curves.
+
+Finally, add two pairs of lines corresonding to the upper and lower CI of the minimum and maximum means, calculated in Part b. Use different line types for these lines.
+
+If you do this exercise in SAS, you can do parts a-c in IML, saving the matrices to a data table and use SGPLOT for part d.
+
+
+# Exercise 5
+
+I was shopping for a motorcycle this spring, and in researching models, found a list of the fastest production motorcycles (https://en.wikipedia.org/wiki/List_of_fastest_production_motorcycles) . I edited this page to create a data table in CSV format.
+
+## Part a
+
+Download the file `fastest.csv` from D2L and read the file into a data frame or table. Print a summary of the table.
+
+## Part b
+
+To show that the data was read correctly, create three plots. Plot
+
+1. Make vs Engine 
+2. Horsepower vs Engine
+3. MPH vs Horsepower
+
+These three plots should reproduce the three types of plots shown in the `RegressionEtcPlots` video, **Categorical vs Categorical**, **Continuous vs Continuous** and **Continuous vs Categorical**. Add these as titles to your plots, as appropriate.
+
+
+# Exercise 6
+
+## Part a
+
+Go to http://www.itl.nist.gov/div898/strd/anova/AtmWtAg.html and download the file listed under `Data File in Table Format` (ttps://www.itl.nist.gov/div898/strd/anova/AtmWtAgt.dat)
+
+## Part b
+
+Edit this into a file that can be read into R or SAS, or find an appropriate function that can read the file as-is. You will need to upload this file to D2L along with your Rmd/SAS files. Provide a brief comment on changes you make, or assumptions about the file needed for you file to be read into R/SAS. Read the file into a data frame or data table.
+
+## Part c
+
+Calculate mean, sd and sample size for the two columns in this data; printing the results. You should store the values in variables. Use function(s) from Homework 3 to answer these two questions:
+
+1. Is the difference between the two columns a small, medium or large effect size?
+2. Is the difference between the two columns statistically significant?
+
+Do this by printing function call(s) and results.

@@ -1,0 +1,178 @@
+---
+title: "H5-TESTING FORMULAS"
+author: "Fernando Gutierrez"
+date: "June 23, 2018"
+output: html_document
+---
+
+
+```{r}
+Year=c(1936, 1946, 1951, 1963, 1975, 1997, 2006)
+CaloriesPerRecipeMean <- c(2123.8, 2122.3, 2089.9, 2250.0, 2234.2, 2249.6, 3051.9)
+CaloriesPerRecipeSD <- c(1050.0, 1002.3, 1009.6, 1078.6, 1089.2, 1094.8, 1496.2)
+CaloriesPerServingMean <- c(268.1, 271.1, 280.9, 294.7, 285.6, 288.6, 384.4)
+CaloriesPerServingSD <- c(124.8, 124.2, 116.2, 117.7, 118.3, 122.0, 168.3)
+ServingsPerRecipeMean <- c(12.9, 12.9, 13.0, 12.7, 12.4, 12.4, 12.7)
+ServingsPerRecipeSD <- c(13.3, 13.3, 14.5, 14.6, 14.3, 14.3, 13.0)
+
+CookingTooMuch.dat <- data.frame(
+  Year=Year,
+  CaloriesPerRecipeMean = CaloriesPerRecipeMean,
+  CaloriesPerRecipeSD = CaloriesPerRecipeSD,
+  CaloriesPerServingMean = CaloriesPerServingMean,
+  CaloriesPerServingSD = CaloriesPerServingSD,
+  ServingsPerRecipeMean = ServingsPerRecipeMean,
+  ServingsPerRecipeSD = ServingsPerRecipeSD
+)
+
+sample.size <- 18
+tenth.increment <- 0.10
+hundredth.increment <- 0.100
+idx.1936 <- 1
+idx.2006 <- length(CaloriesPerRecipeMean)
+idxs36_07 <- c(idx.1936,idx.2006)
+alpha=0.05
+```
+
+```{r}
+
+YEAR1<-(rep(Year,  7))
+YEAR2<-(rep(Year,  each = 7))
+MEAN1<-(rep(CaloriesPerRecipeMean, 7))
+MEAN2<-(rep(CaloriesPerRecipeMean, each=7))
+SD1<-(rep(CaloriesPerRecipeSD, 7))
+SD2<-(rep(CaloriesPerRecipeSD, each = 7))
+part.Atable<-as.data.frame(cbind(YEAR1, YEAR2, MEAN1, MEAN2, SD1, SD2))
+head(part.Atable, 10)
+```
+```{r}
+#part.Atable[1:7, c("MEAN1", "SD1")]
+  mean_1<-part.Atable[1:49, c("MEAN1")] 
+  mean_2<-part.Atable[1:49, c("MEAN2")]
+  sd_1<-part.Atable[1:49, c("SD1")]
+  sd_2<-part.Atable[1:49, c("SD2")]
+  
+  a<-cbind(mean_1, mean_2, sd_1, sd_2)
+  
+  
+  mean.1<-vector()
+ mean.2<-vector()
+  sd.1<-vector()
+  sd.2<-vector()
+cohen.wrapper <- function(M, n, x, y) {#, M2, Std1, Std2
+ # mean_1<-part.Atable[1:49, c("MEAN1")] 
+  #mean_2<-part.Atable[1:49, c("MEAN2")]
+  #sd_1<-part.Atable[1:49, c("SD1")]
+  #sd_2<-part.Atable[1:49, c("SD2")]
+  
+  cohen.d<-abs(mean_1 - mean_2) / sqrt( ( sd_1^ 2 + sd_2 ^ 2 ) / 2 )
+  return(cohen.d)
+}
+d<-as.matrix(cohen.wrapper(mean_, mean_2, sd_1, sd_2))#mean_1, mean_2, sd_1, sd_2
+
+d
+
+```
+```{r}
+
+a.pply<-lapply(a[1], cohen.wrapper)#part.Atable[3:6]
+a.pply<-unlist(a.pply)
+a.pply<-as.matrix(a.pply)
+a.pply
+```
+```{r}
+install.packages("jpeg", repos = "http://cran.us.r-project.org")
+library(jpeg)
+knitr::include_graphics('H5IMG_1.png')
+```
+
+
+```{r}
+
+
+mu <- 0; sigma <- 1 
+X3 <- seq(from=(mu-3*sigma), to=(mu+3*sigma),.1)
+
+l_3<- (1/sqrt(2*pi*sigma^2))*exp(-(X3-mu)^2/(2*sigma^2))
+
+
+plot(X3, l_3, type = "l", lwd = 2)
+
+ 
+X2<-seq(from=(mu-sigma*2), to=(mu+sigma*2),.1)
+
+
+l_2 <- (1/sqrt(2*pi*sigma^2))*exp(-(X2-mu)^2/(2*sigma^2))
+
+ 
+X1<-seq(from=(mu-sigma), to=(mu+sigma),.1)
+
+l_1 <- (1/sqrt(2*pi*sigma^2))*exp(-(x1-mu)^2/(2*sigma^2))
+
+plot(X1, l_1, type = 'l')
+```
+```{r}
+
+x3.table<-as.data.frame(X3)
+x2.table<-as.data.frame(X2)
+x1.table<-as.data.frame(X1)
+X<-c(x1.table , x2.table,  x3.table)
+View(X)
+
+
+```
+```{r}
+key<-c(21:41)
+key
+ L1<-cbind(key, l_1)
+as.data.frame(L1) 
+ 
+ key<-c(11: 51)
+L2<-cbind(key, l_2)
+as.data.frame(L2)
+
+key<-c(1:61)
+L3<-cbind(key, l_3)
+as.data.frame(L3)
+
+X<-cbind(key, X3)
+as.data.frame(X)
+
+
+
+library(dplyr)
+library(rowr)
+library(plyr)
+l<-list(X3, l_1, l_2, l_2)
+a<-as.data.frame(unlist(l))
+a<-matrix(data = l, nrow = 61, ncol = 4)
+View(a)
+
+merge(data.frame(A, row.names=NULL), data.frame(B, row.names=NULL), by = 0, all = TRUE)[-1]
+
+d<-merge(data.frame(X, row.names=NULL), data.frame(L1, row.names=NULL), by = 0, all = TRUE)[-1]
+D<-as.data.frame(as.matrix(d))
+
+d1<-merge(data.frame(X, row.names=NULL), data.frame(L2, row.names=NULL), by = 0, all = TRUE)[-1]
+D1<-as.data.frame(as.matrix(d1))
+View(D)
+
+d2<-merge(data.frame(X, row.names=NULL), data.frame(L3, row.names=NULL), by = 0, all = TRUE)[-1]
+D2<-as.data.frame(as.matrix(d2))
+View(D2)
+
+mydata<-cbind(d, d1, d2)
+mydata<-as.data.frame(mydata)
+mydata
+names(mydata)
+mydata<-mydata[order(mydata$key),] 
+final.data<-mydata[c("X3" , "l_1", "l_2", "l_3")]
+View(final.data)
+dis<-mydata %>% group_by(X3) 
+View(dis)
+```
+```{r}
+l_1a<-l_3
+l_1a[]
+```
+
